@@ -30,7 +30,8 @@ export default function Home() {
     <main className="">
       <p>Resize for {imageUrl}, blur:</p>
       {image && 
-        <Image 
+        <Image
+          alt="blur"
           src={image}
           width={400}
           height={400}
@@ -38,7 +39,8 @@ export default function Home() {
       }
       <p>Full image using blur as placeholder:</p>
       {image && 
-        <Image 
+        <Image
+          alt="original with blur"
           src={imageUrl}
           height={400}
           width={400}
@@ -49,7 +51,8 @@ export default function Home() {
       }
       <p>Full image:</p>
       {image && 
-        <Image 
+        <Image
+          alt="original"
           src={imageUrl}
           height={400}
           width={400}
