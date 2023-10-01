@@ -28,7 +28,7 @@ export default function Home() {
 
   return (
     <main className="">
-      <p>Resize for "{imageUrl}", blur:</p>
+      <p>Resize for {imageUrl}, blur:</p>
       {image && 
         <Image 
           src={image}
