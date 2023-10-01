@@ -6,7 +6,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
     const image_url = req.body.image_url || "";
-    let data;
+    let data:any;
     let status = 200;
 
     console.time('fetch');
@@ -41,7 +41,7 @@ export default async function handler(
       console.log(`Done with image "${image_url}".`);
     } catch (error) {
       status = 500;
-      data = error?.message;
+      data = {};
       // console.error({error});
     }
 
