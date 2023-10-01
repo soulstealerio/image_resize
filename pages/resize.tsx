@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const {image_url: imageUrl} = router.query || "";
+  const {image_url: imageUrl} = `${router.query}`;
   const [image, setImage] = useState("")
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function Home() {
       {image && 
         <Image
           alt="original with blur"
-          src={imageUrl}
+          src={imageUrl || ""}
           height={400}
           width={400}
           // fill={true}
