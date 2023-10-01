@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const {image_url: imageUrl} = `${router.query}`;
+  const imageUrl = `${router.query.image_url}`;
   const [image, setImage] = useState("")
 
   useEffect(() => {
