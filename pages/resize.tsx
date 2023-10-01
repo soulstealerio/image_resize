@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const router = useRouter();
   const {image_url: imageUrl} = router.query || "";
-  const [image, setImage] = useState(null)
+  const [image, setImage] = useState("")
 
   useEffect(() => {
     if (imageUrl) {
