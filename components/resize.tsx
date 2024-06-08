@@ -20,6 +20,10 @@ export default function Resize() {
       setPreviewImageSize(0)
 
       // Fetch preview image.
+      // We use fetch() here instead of something like axios or useAxios, because
+      // axios can have a lot of problem with CORS and setting needed headers.
+      // For this demo, we show the sure fire way to get it, although urls to image paths
+      // may need to be listed in next.config.js's remotePatterns.
       fetch('/api/resize', {
         method: "POST",
         headers: {
