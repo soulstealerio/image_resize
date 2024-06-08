@@ -31,6 +31,8 @@ Errors:
 ## Demo
 See a page with React usage at http://imageresize.soulstealer.io/.
 
+![demo](./doc/img/demo.gif)
+
 ## CI
 Builds for Continous Integration are ran by Github Workflows (see ./github/workflows). Builds run within Docker on Github, and the following builds run and are tagged in the following scenarios:
 
