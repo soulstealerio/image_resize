@@ -31,6 +31,17 @@ Errors:
 ## Demo
 See a page with React usage at http://imageresize.soulstealer.io/.
 
+## CI
+Builds for Continous Integration are ran by Github Workflows (see ./github/workflows). Builds run within Docker on Github, and the following builds run and are tagged in the following scenarios:
+
+* PR created/updated - `pr-<#>` built and tagged docker image pushed to dockerhub.
+* PR merged - `int` (for integration) built and tagged docker image pushed to dockerhub. `minor` version of package.json semver version `<major.minor.patch>` is automatically bumped.
+* GH release created as PRERELEASE - `staging` build and tagged docker image pushed to dockerhub.
+* GH release created/updated as LATEST RELEASE - from package.json, `<major.minor.patch>` built and tagged docker image pushed to dockerhub.
+
+## CD
+For the moment, `kubectl edit deployment imageresize`, search for image:, and bump the version manually. In the near future, ArgoCD config will be deployed to do this for us.
+
 ## npm scripts
 
 ### Build and dev scripts
