@@ -1,37 +1,54 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Image Resize - Soul Stealer
 
-## Getting Started
+This is a next.js web app for resizing images.
 
-First, run the development server:
+## Features
+### API
+The main usage of this app is the api endpoint, /api/resize, which takes the following paramaters:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+POST /api/resize
+ContentType: application/json
+{
+  "image_url": "<url to some jpeg/gif>"
+}
+```
+Result:
+```
+{
+  "content": "<raw byte data>",
+  dataURIBase64: "<URI base64 data; this is what is commonly used for inlining image data>"
+}
+```
+Errors: 
+```
+500
+{
+  "errorMessage": "..."
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Demo
+See a page with React usage at http://imageresize.soulstealer.io/.
 
-API requests for resize from a JS client should look like:
-```
-fetch('/api/resize', {
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({image_url: imageUrl}),
-})
-.then(async response => response.json())
-.then(response => {
-    const {dataURIBase64} = response
-    // Do something like use a React set-state callback from useState.
-    // setImage(dataURIBase64)
+## npm scripts
 
-    // dataURIBase64 is useful for things like next/image's 
-    // blurDataURL.
-});
-```
+### Build and dev scripts
 
-A resize demo for the webpage is http://localhost:3000/resize?image_url=https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/e55334ae-75ac-42ab-8ab1-dc613b20261e--b27b7f6e-672d-4cbe-bd80-8cdd206b11d1.jpg
+- `dev` – start dev server
+- `build` – bundle application for production
+- `export` – exports static website to `out` folder
+- `analyze` – analyzes application bundle with [@next/bundle-analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
+
+### Testing scripts
+
+- `typecheck` – checks TypeScript types
+- `lint` – runs ESLint
+- `prettier:check` – checks files with Prettier
+- `jest` – runs jest tests
+- `jest:watch` – starts jest watch
+- `test` – runs `jest`, `prettier:check`, `lint` and `typecheck` scripts
+
+### Other scripts
+
+- `prettier:write` – formats all files with Prettier
