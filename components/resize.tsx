@@ -6,7 +6,7 @@ import { IconLoader } from "@tabler/icons-react";
 
 export default function Resize() {
   const router = useRouter();
-  const imageUrl = router.query.image_url || "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/5e8d2bcc-9c93-4c32-b7e4-1ea8303434f9.gif";
+  const imageUrl = router?.query?.image_url?.toString() || "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/5e8d2bcc-9c93-4c32-b7e4-1ea8303434f9.gif";
   const [previewImage, setPreviewImage] = useState("")
   const [previewImageSize, setPreviewImageSize] = useState(0)
   const [reload, setReload] = useState(false)
@@ -58,8 +58,7 @@ export default function Resize() {
             <Loader
               style={{display: "flex", justifyContent: "center", alignItems: "center"}}
               size="md"
-              withText
-              icon={<IconLoader size={12} />} />
+            />
             :
             <Button onClick={() => setReload(true)} color="blue">Reload</Button>
           }

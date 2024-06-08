@@ -20,6 +20,7 @@ export default function Home() {
         />
         <div style={{paddingLeft: "10px", paddingTop: "10px"}}>
           <Image 
+            alt="Soul Stealer Logo"
             src="/sslogocircle.png"
             width={40}
             height={40}

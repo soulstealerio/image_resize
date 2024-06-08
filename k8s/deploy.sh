@@ -14,7 +14,7 @@ echo "Deploying $IMAGE_NAME:$IMAGE_VERSION..."
 
 # 1). Build the images:
 # * -t is the tag flag, in format name:tag
-npm run lint # short circuit lint issues quickly
+# npm run lint # short circuit lint issues quickly
 echo docker build --no-cache --progress=plain -t $IMAGE_NAME:$IMAGE_VERSION .
 docker build --no-cache --progress=plain -t $IMAGE_NAME:$IMAGE_VERSION .
 

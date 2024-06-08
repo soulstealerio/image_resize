@@ -40,7 +40,8 @@ export default async function handler(
       console.log(`Done with image "${image_url}".`);
     } catch (error) {
       status = 500;
-      data = {errorMessage: error?.message};
+      console.error(error);
+      data = {errorMessage: "Error loading image"};
     }
 
     res.status(status).send(data);

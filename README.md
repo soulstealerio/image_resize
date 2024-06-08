@@ -29,7 +29,7 @@ Errors:
 ```
 
 ## Demo
-See a page with React usage at http://imageresize.soulstealer.io/
+See a page with React usage at http://imageresize.soulstealer.io/.
 
 ## npm scripts
 
