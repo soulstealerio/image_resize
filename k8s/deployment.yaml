@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imageresize
+  labels:
+    app: imageresize
+    tier: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: imageresize
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: imageresize
+        tier: web
+    spec:
+      containers:
+      - name: imageresize
+        image: cblair/imageresize:$IMAGE_VERSION
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 3000
+        command: ["npm", "run", "start"]
+        # command: ["sleep", "1000000"]
