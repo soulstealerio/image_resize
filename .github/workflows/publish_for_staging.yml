@@ -1,0 +1,25 @@
+name: publish_for_staging
+run-name: staging imageresize build and publish
+on:
+  release:
+    types: [prereleased]
+jobs:
+  publish:
+    # if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v3
+        name: Check out code
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Build & push Docker image
+        with:
+          image: cblair/imageresize
+          tags: staging #, staging-${{ github.event.release.tag_name }}
+          registry: docker.io
+          dockerfile: Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          buildArgs: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}}, NEXT_PUBLIC_STRIPE_SECRET_KEY=${{secrets.NEXT_PUBLIC_STRIPE_SECRET_KEY}}, NEXT_PUBLIC_PATIENT_PORTAL_ACCOUNT_CONFIRM_URL=${{vars.NEXT_PUBLIC_PATIENT_PORTAL_ACCOUNT_CONFIRM_URL}}

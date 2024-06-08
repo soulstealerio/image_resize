@@ -1,0 +1,26 @@
+name: publish_for_prod
+run-name: production imageresize build and publish
+on:
+  release:
+    types: [released]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    steps:
+      - uses: actions/checkout@v3
+        name: Check out code
+
+      - name: Version
+        run: echo Publishing production version ${{ github.event.release.tag_name }}
+
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Build & push Docker image
+        with:
+          image: cblair/imageresize
+          tags: latest, ${{ github.event.release.tag_name }}
+          registry: docker.io
+          dockerfile: Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
