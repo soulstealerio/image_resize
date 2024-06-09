@@ -17,7 +17,7 @@ Result:
 ```
 {
   "content": "<raw byte data>",
-  dataURIBase64: "<URI base64 data; this is what is commonly used for inlining image data>"
+  "dataURIBase64": "<URI base64 data; this is what is commonly used for inlining image data>"
 }
 ```
 Errors: 
