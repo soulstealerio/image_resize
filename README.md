@@ -1,6 +1,8 @@
 # Image Resize - Soul Stealer
 
-This is a next.js web app for resizing images.
+This is a next.js web app for resizing images, specifically for low res, blurry previews. These low res previews can be swapped out for the high res image once it loads. This repo has React code examples that do this, which you can see deployed at http://imageresize.soulstealer.io/.
+
+![demo](./doc/img/demo.gif)
 
 ## Features
 ### API
@@ -27,11 +29,6 @@ Errors:
   "errorMessage": "..."
 }
 ```
-
-## Demo
-See a page with React usage at http://imageresize.soulstealer.io/.
-
-![demo](./doc/img/demo.gif)
 
 ## CI
 Builds for Continous Integration are ran by Github Workflows (see ./github/workflows). Builds run within Docker on Github, and the following builds run and are tagged in the following scenarios:
