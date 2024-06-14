@@ -10,6 +10,7 @@ env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: staging
   GKE_ZONE: us-west1-a
+  GCLOUD_PROJECT: orbital-hawk-294904
   DEPLOYMENT_NAME: image_resize
   IMAGE: cblair/image_resize
 
