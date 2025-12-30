@@ -244,3 +244,54 @@ Shared cache across multiple pods.
 - Same key structure, but shared across all pods
 
 **Costs:** ~$50-100/month for managed Redis, or self-host in k8s
+
+---
+
+## Create Filtered GIF API
+
+A new endpoint for creating animated GIFs from multiple already-filtered images. This endpoint is designed to work with the React Native mobile app, where CSS filters are applied client-side, and filtered frames are sent to this endpoint for GIF creation.
+
+### Endpoint
+
+```
+POST /api/create-filtered-gif
+Content-Type: multipart/form-data
+```
+
+### Form Fields
+
+| Field Name   | Type    | Required | Description                                                                                                   |
+| ------------ | ------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `images[]`   | File[]  | Yes      | Multiple image files (JPEG, PNG, or GIF). Already filtered. Must have uniform dimensions. Max 10MB per image. |
+| `frameDelay` | Integer | No       | Frame delay in milliseconds. Default: 500. Range: 10-10000.                                                   |
+
+### Response
+
+- **Success (200)**: Returns animated GIF binary with `Content-Type: image/gif`
+- **Error (400/500)**: Returns JSON error object
+
+### Design Decisions
+
+1. **Technology**: Node.js with Sharp + gifenc (pure JavaScript, no native deps)
+2. **Data Format**: multipart/form-data (standard, efficient, better for slow connections)
+3. **Size Limit**: 10MB per image (prevents memory exhaustion)
+4. **Uniform Sizes**: All images must have identical dimensions (validated)
+5. **Frame Delay**: Configurable, default 500ms (0.5 seconds per frame)
+
+### Example
+
+```bash
+curl -X POST http://localhost:3000/api/create-filtered-gif \
+  -F "images[]=@frame1.jpg" \
+  -F "images[]=@frame2.jpg" \
+  -F "images[]=@frame3.jpg" \
+  -F "images[]=@frame4.jpg" \
+  -F "frameDelay=500" \
+  -o output.gif
+```
+
+### Documentation
+
+- **Full API Documentation**: See [API_DOCUMENTATION_CREATE_FILTERED_GIF.md](./API_DOCUMENTATION_CREATE_FILTERED_GIF.md)
+- **Swagger UI**: Available at `/swagger`
+- **OpenAPI Spec**: Available at `/api/swagger.json`
