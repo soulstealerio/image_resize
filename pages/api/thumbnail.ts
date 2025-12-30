@@ -113,11 +113,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow GET requests
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+  // Only allow GET and HEAD requests
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    res.setHeader("Allow", ["GET", "HEAD"]);
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  // For HEAD requests, we'll process normally but Next.js will strip the body
+  const isHeadRequest = req.method === "HEAD";
 
   const { url, width, height, format, quality } = req.query;
 
