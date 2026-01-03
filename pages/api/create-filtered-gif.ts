@@ -425,6 +425,13 @@ export default async function handler(
     console.log(
       `[create-filtered-gif] Processing ${images.length} images, frameDelay: ${frameDelay}ms`
     );
+    
+    // Log file details for debugging
+    images.forEach((file, index) => {
+      console.log(
+        `[create-filtered-gif] Image ${index + 1}: ${file.originalFilename || file.newFilename}, size: ${file.size} bytes, path: ${file.filepath}`
+      );
+    });
 
     // Process all images
     const processedFrames: ProcessedFrame[] = [];
