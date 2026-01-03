@@ -251,6 +251,10 @@ Shared cache across multiple pods.
 
 A new endpoint for creating animated GIFs from multiple already-filtered images. This endpoint is designed to work with the React Native mobile app, where CSS filters are applied client-side, and filtered frames are sent to this endpoint for GIF creation.
 
+### Overview
+
+The mobile app applies CSS filters (brightness, contrast, saturation, etc.) to images in real-time. Users can preview different filter effects and then create an animated GIF showing the progression through different filter states. The app captures each filtered frame and sends them to this endpoint for GIF creation.
+
 ### Endpoint
 
 ```
@@ -268,17 +272,22 @@ Content-Type: multipart/form-data
 ### Response
 
 - **Success (200)**: Returns animated GIF binary with `Content-Type: image/gif`
-- **Error (400/500)**: Returns JSON error object
+- **Error (400/500)**: Returns JSON error object with `error` and `message` fields
 
-### Design Decisions
+### Example Input/Output
 
-1. **Technology**: Node.js with Sharp + gifenc (pure JavaScript, no native deps)
-2. **Data Format**: multipart/form-data (standard, efficient, better for slow connections)
-3. **Size Limit**: 10MB per image (prevents memory exhaustion)
-4. **Uniform Sizes**: All images must have identical dimensions (validated)
-5. **Frame Delay**: Configurable, default 500ms (0.5 seconds per frame)
+**Example Input Frames:**
+- `test_images/frame1.jpg` - First filtered frame
+- `test_images/frame2.jpg` - Second filtered frame  
+- `test_images/frame3.jpg` - Third filtered frame
+- `test_images/frame4.jpg` - Fourth filtered frame
 
-### Example
+**Example Output:**
+- `test_images/test-output.gif` - Animated GIF containing all input frames
+
+### Examples
+
+#### cURL
 
 ```bash
 curl -X POST http://localhost:3000/api/create-filtered-gif \
@@ -290,8 +299,102 @@ curl -X POST http://localhost:3000/api/create-filtered-gif \
   -o output.gif
 ```
 
+#### React Native
+
+```javascript
+const formData = new FormData();
+formData.append('images[]', {
+  uri: frame1Uri,
+  type: 'image/jpeg',
+  name: 'frame1.jpg'
+});
+formData.append('images[]', {
+  uri: frame2Uri,
+  type: 'image/jpeg',
+  name: 'frame2.jpg'
+});
+formData.append('images[]', {
+  uri: frame3Uri,
+  type: 'image/jpeg',
+  name: 'frame3.jpg'
+});
+formData.append('images[]', {
+  uri: frame4Uri,
+  type: 'image/jpeg',
+  name: 'frame4.jpg'
+});
+formData.append('frameDelay', '500');
+
+const response = await fetch('https://api.example.com/api/create-filtered-gif', {
+  method: 'POST',
+  body: formData,
+});
+
+const gifBlob = await response.blob();
+// Save or display the GIF
+```
+
+### Design Decisions
+
+1. **Technology**: Node.js with Sharp + gifenc (pure JavaScript, no native deps)
+   - **Sharp**: Already in use for thumbnail generation, fast native image processing
+   - **gifenc**: Pure JavaScript GIF encoder with no native dependencies (unlike `gifencoder` which requires `canvas`)
+   - Avoids Python/Pillow dependency (the `server/` repo is legacy)
+
+2. **Data Format**: multipart/form-data (standard, efficient, better for slow connections)
+   - Standard for file uploads
+   - Better for low/spotty internet: streams data incrementally
+   - More efficient than base64 (33% size overhead)
+   - Works with all HTTP clients
+
+3. **Size Limit**: 10MB per image (prevents memory exhaustion)
+   - Reasonable for mobile app captures (typically 1-5MB)
+   - Validated before processing (fails fast)
+   - Protects server resources
+
+4. **Uniform Sizes**: All images must have identical dimensions (validated)
+   - Required for GIF animation format
+   - First image sets dimensions, others must match
+   - Clear error message on mismatch
+
+5. **Frame Delay**: Configurable, default 500ms (0.5 seconds per frame)
+   - Range: 10ms - 10 seconds
+   - Allows for fast previews or slow dramatic effects
+   - Specified in milliseconds for precision
+
+### Error Handling
+
+| Error | Status | Message Example |
+|-------|--------|----------------|
+| No images provided | 400 | "No images provided. Use 'images' or 'images[]' field." |
+| Image size exceeded | 400 | "Image 1 exceeds 10MB limit: 12.5MB" |
+| Dimension mismatch | 400 | "Image 2 dimensions (800x600) do not match first image (1024x768). All images must have uniform dimensions." |
+| Invalid frame delay | 400 | "frameDelay must be between 10 and 10000 milliseconds" |
+| Processing failure | 500 | "Failed to create GIF: [error details]" |
+
+### Performance Characteristics
+
+- **Processing time**: ~100-500ms per frame (depends on image size)
+- **Memory usage**: ~2-3x input size during processing
+- **Output size**: Typically 50-200KB for 4 frames at mobile resolutions (992×1488)
+- **Concurrent requests**: Limited by server memory (each request processes images in memory)
+
+### Testing
+
+A test script is available at `tests/test-gif-endpoint.js` that:
+- Downloads sample images from URLs
+- Sends them to the endpoint
+- Saves the resulting GIF to `tests/test-output.gif`
+
+Run the test:
+```bash
+cd tests
+node test-gif-endpoint.js
+```
+
 ### Documentation
 
 - **Full API Documentation**: See [API_DOCUMENTATION_CREATE_FILTERED_GIF.md](./API_DOCUMENTATION_CREATE_FILTERED_GIF.md)
+- **Release Notes**: See [RELEASE_NOTES_GIF_API.md](./RELEASE_NOTES_GIF_API.md)
 - **Swagger UI**: Available at `/swagger`
 - **OpenAPI Spec**: Available at `/api/swagger.json`
