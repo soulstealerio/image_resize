@@ -380,6 +380,15 @@ function createAnimatedGIF(
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
 
+    // Log frame pixel data info
+    const pixelDataSize = frame.pixels.length;
+    const expectedSize = width * height * 4; // RGBA = 4 bytes per pixel
+    if (pixelDataSize !== expectedSize) {
+      console.warn(
+        `[createAnimatedGIF] Frame ${i + 1}: Pixel data size mismatch. Expected ${expectedSize} bytes (${width}x${height}x4), got ${pixelDataSize} bytes`
+      );
+    }
+
     // Quantize colors to 256-color palette
     const palette = quantize(frame.pixels, 256, {
       format: "rgb565", // Better quality
@@ -388,12 +397,20 @@ function createAnimatedGIF(
     // Apply palette to get indexed bitmap
     const index = applyPalette(frame.pixels, palette, "rgb565");
 
-    // Write frame with delay (gifenc expects delay in milliseconds)
+    // Write frame with delay
+    // gifenc expects delay in centiseconds (1/100th of a second)
+    // frameDelay is in milliseconds, so convert: 500ms = 50 centiseconds
+    const delayCentiseconds = Math.round(frameDelay / 10);
+    
     gif.writeFrame(index, width, height, {
       palette,
-      delay: frameDelay, // Already in milliseconds
+      delay: delayCentiseconds, // Convert milliseconds to centiseconds
       first: i === 0, // First frame needs to set global color table
     });
+    
+    console.log(
+      `[createAnimatedGIF] Added frame ${i + 1}/${frames.length}: ${width}x${height}, pixels: ${pixelDataSize} bytes, delay: ${delayCentiseconds}cs`
+    );
   }
 
   // Finish encoding
@@ -468,11 +485,24 @@ export default async function handler(
     console.log(
       `[create-filtered-gif] Creating GIF from ${processedFrames.length} frames`
     );
+    console.log(
+      `[create-filtered-gif] Frame dimensions: ${processedFrames[0].width}x${processedFrames[0].height}`
+    );
+    console.log(
+      `[create-filtered-gif] Frame delay: ${frameDelay}ms (${Math.round(frameDelay / 10)} centiseconds)`
+    );
+    
     const gifBytes = createAnimatedGIF(processedFrames, frameDelay);
 
     console.log(
       `[create-filtered-gif] GIF created: ${(gifBytes.length / 1024).toFixed(1)}KB, ${processedFrames.length} frame(s)`
     );
+    
+    if (gifBytes.length < 10000) {
+      console.warn(
+        `[create-filtered-gif] WARNING: GIF size is suspiciously small (${(gifBytes.length / 1024).toFixed(1)}KB). Expected larger size for ${processedFrames.length} frames at ${processedFrames[0].width}x${processedFrames[0].height}`
+      );
+    }
 
     // Clean up temp files
     for (const file of tempFiles) {
