@@ -9,17 +9,44 @@ const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data");
 
-// Image URLs from the session data
-// Using first 4 JPG images which should have uniform dimensions
-// (strip.png and .gif have different dimensions)
-const imageUrls = [
-  "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/41861edb-a715-4337-a8ed-ad72f225d6ff--7ed1feff-367b-42ae-95ae-4ce4d7d01cd8.jpg",
-  "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/41861edb-a715-4337-a8ed-ad72f225d6ff--291cd2e2-5ff3-4d4d-900e-c56a45119412.jpg",
-  "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/41861edb-a715-4337-a8ed-ad72f225d6ff--a04f0e85-bc89-42af-89fb-7ba7a75fce11.jpg",
-  "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/41861edb-a715-4337-a8ed-ad72f225d6ff--7b12e983-9e52-434f-845b-7e394bd2ef13.jpg",
-];
+// Image URLs - can be provided via command line arguments or use defaults
+// Usage: node test-gif-endpoint.js [url1] [url2] [url3] [url4]
+// Or set IMAGE_URLS environment variable as JSON array
 
-const API_URL = "http://localhost:3000/api/create-filtered-gif";
+let imageUrls;
+
+if (process.argv.length > 2) {
+  // Use URLs from command line arguments
+  imageUrls = process.argv.slice(2);
+  console.log(
+    `Using ${imageUrls.length} image URLs from command line arguments`
+  );
+} else if (process.env.IMAGE_URLS) {
+  // Use URLs from environment variable (JSON array)
+  try {
+    imageUrls = JSON.parse(process.env.IMAGE_URLS);
+    console.log(
+      `Using ${imageUrls.length} image URLs from IMAGE_URLS environment variable`
+    );
+  } catch (error) {
+    console.error("Error parsing IMAGE_URLS:", error.message);
+    process.exit(1);
+  }
+} else {
+  // Default URLs from session c3e84c84-6516-4dcf-8648-0e51c8cbc228
+  // Using 4 JPG images (filtering out strip.png and .gif)
+  imageUrls = [
+    "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/c3e84c84-6516-4dcf-8648-0e51c8cbc228--be03d2e7-2e0e-4892-8336-6ee4f1eaf469.jpg",
+    "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/c3e84c84-6516-4dcf-8648-0e51c8cbc228--75a48c0f-31a1-49fd-acdf-6e1d54740927.jpg",
+    "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/c3e84c84-6516-4dcf-8648-0e51c8cbc228--ff3b32bc-7f52-4a6f-be29-67b7a7baa176.jpg",
+    "https://storage.googleapis.com/526e6878-501f-4571-bfc8-0e78947cd452/c3e84c84-6516-4dcf-8648-0e51c8cbc228--ea7b7c88-cfbe-4d66-9df9-ffdad2b509ac.jpg",
+  ];
+  console.log(
+    `Using default image URLs from session c3e84c84-6516-4dcf-8648-0e51c8cbc228 (${imageUrls.length} images)`
+  );
+}
+
+const API_URL = "http://imageresize.soulstealer.io/api/create-filtered-gif";
 const FRAME_DELAY = 500; // milliseconds
 
 // Create temp directory (in tests directory)
