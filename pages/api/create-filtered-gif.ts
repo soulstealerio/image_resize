@@ -272,7 +272,7 @@ async function parseFormData(
       console.log(`[parseFormData] Files received:`, Object.keys(files));
       console.log(`[parseFormData] Field values:`, {
         frameDelay: fields.frameDelay,
-        otherFields: Object.keys(fields).filter(k => k !== 'frameDelay'),
+        otherFields: Object.keys(fields).filter((k) => k !== "frameDelay"),
       });
 
       // Extract images array - support both 'images' and 'images[]' field names
@@ -281,15 +281,24 @@ async function parseFormData(
 
       if (files.images) {
         images = Array.isArray(files.images) ? files.images : [files.images];
-        console.log(`[parseFormData] Found ${images.length} images in 'images' field`);
+        console.log(
+          `[parseFormData] Found ${images.length} images in 'images' field`
+        );
       } else if ((files as any)["images[]"]) {
         // Handle 'images[]' field name (brackets are part of the name)
         const imagesArray = (files as any)["images[]"];
         images = Array.isArray(imagesArray) ? imagesArray : [imagesArray];
-        console.log(`[parseFormData] Found ${images.length} images in 'images[]' field`);
+        console.log(
+          `[parseFormData] Found ${images.length} images in 'images[]' field`
+        );
       } else {
-        console.warn(`[parseFormData] No images found in 'images' or 'images[]' fields`);
-        console.log(`[parseFormData] Available file fields:`, Object.keys(files));
+        console.warn(
+          `[parseFormData] No images found in 'images' or 'images[]' fields`
+        );
+        console.log(
+          `[parseFormData] Available file fields:`,
+          Object.keys(files)
+        );
       }
 
       if (images.length === 0) {
@@ -317,8 +326,10 @@ async function parseFormData(
       const frameDelay = frameDelayStr
         ? parseInt(frameDelayStr, 10)
         : DEFAULT_FRAME_DELAY_MS;
-      
-      console.log(`[parseFormData] Frame delay: ${frameDelayStr} -> ${frameDelay}ms`);
+
+      console.log(
+        `[parseFormData] Frame delay: ${frameDelayStr} -> ${frameDelay}ms`
+      );
 
       // Validate frameDelay
       if (
@@ -378,15 +389,17 @@ async function processImageFrame(
   const imageBuffer = fs.readFileSync(filePath);
   const readDuration = Date.now() - readStartTime;
   const actualFileSize = imageBuffer.length;
-  
-  console.log(`[processImageFrame] File read in ${readDuration}ms: ${actualFileSize} bytes`);
-  
+
+  console.log(
+    `[processImageFrame] File read in ${readDuration}ms: ${actualFileSize} bytes`
+  );
+
   if (actualFileSize !== fileSize) {
     console.warn(
       `[processImageFrame] WARNING: File size mismatch. Reported: ${fileSize} bytes, Actual: ${actualFileSize} bytes (diff: ${actualFileSize - fileSize} bytes)`
     );
   }
-  
+
   console.log(`[processImageFrame] Creating sharp image object...`);
   const image = sharp(imageBuffer);
 
@@ -395,16 +408,19 @@ async function processImageFrame(
   const metadataStartTime = Date.now();
   const metadata = await image.metadata();
   const metadataDuration = Date.now() - metadataStartTime;
-  
-  console.log(`[processImageFrame] Metadata extracted in ${metadataDuration}ms:`, {
-    width: metadata.width,
-    height: metadata.height,
-    format: metadata.format,
-    channels: metadata.channels,
-    hasAlpha: metadata.hasAlpha,
-    size: metadata.size,
-  });
-  
+
+  console.log(
+    `[processImageFrame] Metadata extracted in ${metadataDuration}ms:`,
+    {
+      width: metadata.width,
+      height: metadata.height,
+      format: metadata.format,
+      channels: metadata.channels,
+      hasAlpha: metadata.hasAlpha,
+      size: metadata.size,
+    }
+  );
+
   if (!metadata.width || !metadata.height) {
     throw new Error(`Image ${index + 1}: Unable to read dimensions`);
   }
@@ -417,34 +433,37 @@ async function processImageFrame(
     .raw()
     .toBuffer({ resolveWithObject: true });
   const pixelDuration = Date.now() - pixelStartTime;
-  
+
   const pixelDataSize = data.length;
   const expectedPixelSize = info.width * info.height * 4; // RGBA = 4 bytes per pixel
-  
-  console.log(`[processImageFrame] Pixel data extracted in ${pixelDuration}ms:`, {
-    width: info.width,
-    height: info.height,
-    channels: info.channels,
-    pixelDataSize: pixelDataSize,
-    expectedSize: expectedPixelSize,
-    sizeMatch: pixelDataSize === expectedPixelSize,
-  });
-  
+
+  console.log(
+    `[processImageFrame] Pixel data extracted in ${pixelDuration}ms:`,
+    {
+      width: info.width,
+      height: info.height,
+      channels: info.channels,
+      pixelDataSize: pixelDataSize,
+      expectedSize: expectedPixelSize,
+      sizeMatch: pixelDataSize === expectedPixelSize,
+    }
+  );
+
   if (pixelDataSize !== expectedPixelSize) {
     console.warn(
       `[processImageFrame] WARNING: Pixel data size mismatch. Expected ${expectedPixelSize} bytes, got ${pixelDataSize} bytes`
     );
   }
-  
+
   const pixels = new Uint8Array(data);
   console.log(`[processImageFrame] Created Uint8Array: ${pixels.length} bytes`);
-  
+
   // Sample first few pixels for debugging
   if (pixels.length >= 16) {
     const samplePixels = Array.from(pixels.slice(0, 16));
     console.log(`[processImageFrame] First 4 pixels (RGBA):`, samplePixels);
   }
-  
+
   return {
     width: info.width,
     height: info.height,
@@ -470,19 +489,23 @@ function createAnimatedGIF(
   console.log(`[createAnimatedGIF] Initializing GIF encoder...`);
   console.log(`[createAnimatedGIF] Dimensions: ${width}x${height}`);
   console.log(`[createAnimatedGIF] Total frames: ${frames.length}`);
-  console.log(`[createAnimatedGIF] Frame delay: ${frameDelay}ms (${Math.round(frameDelay / 10)} centiseconds)`);
-  
+  console.log(
+    `[createAnimatedGIF] Frame delay: ${frameDelay}ms (${Math.round(frameDelay / 10)} centiseconds)`
+  );
+
   const encoderStartTime = Date.now();
   const gif = GIFEncoder({
     width,
     height,
   });
   const encoderDuration = Date.now() - encoderStartTime;
-  console.log(`[createAnimatedGIF] GIF encoder created in ${encoderDuration}ms`);
+  console.log(
+    `[createAnimatedGIF] GIF encoder created in ${encoderDuration}ms`
+  );
 
   // Process and add each frame
   let previousFramePixels: Uint8Array | null = null;
-  
+
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
 
@@ -496,51 +519,62 @@ function createAnimatedGIF(
     }
 
     // Check if this frame is identical to the previous one
-    console.log(`[createAnimatedGIF] Processing frame ${i + 1}/${frames.length}...`);
-    
+    console.log(
+      `[createAnimatedGIF] Processing frame ${i + 1}/${frames.length}...`
+    );
+
     // Compare with previous frame
     if (i > 0 && previousFramePixels) {
-      console.log(`[createAnimatedGIF] Comparing frame ${i + 1} with frame ${i}...`);
-      
+      console.log(
+        `[createAnimatedGIF] Comparing frame ${i + 1} with frame ${i}...`
+      );
+
       // Sample comparison: check first 100 pixels (400 bytes for RGBA)
       const sampleSize = Math.min(100, frame.pixels.length / 4);
       let identicalPixels = 0;
       let totalDiff = 0;
-      
+
       for (let j = 0; j < sampleSize * 4; j += 4) {
         const r1 = frame.pixels[j];
         const g1 = frame.pixels[j + 1];
         const b1 = frame.pixels[j + 2];
         const a1 = frame.pixels[j + 3];
-        
+
         const r2 = previousFramePixels[j];
         const g2 = previousFramePixels[j + 1];
         const b2 = previousFramePixels[j + 2];
         const a2 = previousFramePixels[j + 3];
-        
+
         if (r1 === r2 && g1 === g2 && b1 === b2 && a1 === a2) {
           identicalPixels++;
         } else {
-          totalDiff += Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2) + Math.abs(a1 - a2);
+          totalDiff +=
+            Math.abs(r1 - r2) +
+            Math.abs(g1 - g2) +
+            Math.abs(b1 - b2) +
+            Math.abs(a1 - a2);
         }
       }
-      
+
       const similarityPercent = (identicalPixels / sampleSize) * 100;
       const avgDiff = totalDiff / (sampleSize - identicalPixels);
-      
-      console.log(`[createAnimatedGIF] Frame ${i + 1} vs ${i} comparison (first ${sampleSize} pixels):`, {
-        identicalPixels: identicalPixels,
-        similarityPercent: similarityPercent.toFixed(2) + '%',
-        averageDifference: avgDiff.toFixed(2),
-      });
-      
+
+      console.log(
+        `[createAnimatedGIF] Frame ${i + 1} vs ${i} comparison (first ${sampleSize} pixels):`,
+        {
+          identicalPixels: identicalPixels,
+          similarityPercent: similarityPercent.toFixed(2) + "%",
+          averageDifference: avgDiff.toFixed(2),
+        }
+      );
+
       if (similarityPercent > 99) {
         console.warn(
           `[createAnimatedGIF] WARNING: Frame ${i + 1} appears to be nearly identical to frame ${i} (${similarityPercent.toFixed(2)}% similar). This will result in a very small GIF.`
         );
       }
     }
-    
+
     // Store previous frame pixels for comparison
     previousFramePixels = new Uint8Array(frame.pixels);
 
@@ -551,20 +585,24 @@ function createAnimatedGIF(
       format: "rgb565", // Better quality
     });
     const quantizeDuration = Date.now() - quantizeStartTime;
-    console.log(`[createAnimatedGIF] Quantization completed in ${quantizeDuration}ms, palette size: ${palette.length} bytes`);
+    console.log(
+      `[createAnimatedGIF] Quantization completed in ${quantizeDuration}ms, palette size: ${palette.length} bytes`
+    );
 
     // Apply palette to get indexed bitmap
     console.log(`[createAnimatedGIF] Applying palette to frame ${i + 1}...`);
     const applyStartTime = Date.now();
     const index = applyPalette(frame.pixels, palette, "rgb565");
     const applyDuration = Date.now() - applyStartTime;
-    console.log(`[createAnimatedGIF] Palette applied in ${applyDuration}ms, index size: ${index.length} bytes`);
+    console.log(
+      `[createAnimatedGIF] Palette applied in ${applyDuration}ms, index size: ${index.length} bytes`
+    );
 
     // Write frame with delay
     // gifenc expects delay in centiseconds (1/100th of a second)
     // frameDelay is in milliseconds, so convert: 500ms = 50 centiseconds
     const delayCentiseconds = Math.round(frameDelay / 10);
-    
+
     console.log(`[createAnimatedGIF] Writing frame ${i + 1} to GIF...`);
     const writeStartTime = Date.now();
     gif.writeFrame(index, width, height, {
@@ -573,7 +611,7 @@ function createAnimatedGIF(
       first: i === 0, // First frame needs to set global color table
     });
     const writeDuration = Date.now() - writeStartTime;
-    
+
     console.log(
       `[createAnimatedGIF] Frame ${i + 1}/${frames.length} written in ${writeDuration}ms: ${width}x${height}, pixels: ${pixelDataSize} bytes, delay: ${delayCentiseconds}cs, first: ${i === 0}`
     );
@@ -585,22 +623,35 @@ function createAnimatedGIF(
 
   // Get GIF bytes
   const gifBytes = gif.bytes();
-  console.log(`[createAnimatedGIF] GIF bytes() returned ${gifBytes.length} bytes`);
-  
+  console.log(
+    `[createAnimatedGIF] GIF bytes() returned ${gifBytes.length} bytes`
+  );
+
   // Verify GIF header (should start with GIF87a or GIF89a)
   if (gifBytes.length >= 6) {
-    const header = String.fromCharCode(gifBytes[0], gifBytes[1], gifBytes[2], gifBytes[3], gifBytes[4], gifBytes[5]);
-    console.log(`[createAnimatedGIF] GIF header: ${header}, total size: ${gifBytes.length} bytes`);
-    
-    if (!header.startsWith('GIF')) {
+    const header = String.fromCharCode(
+      gifBytes[0],
+      gifBytes[1],
+      gifBytes[2],
+      gifBytes[3],
+      gifBytes[4],
+      gifBytes[5]
+    );
+    console.log(
+      `[createAnimatedGIF] GIF header: ${header}, total size: ${gifBytes.length} bytes`
+    );
+
+    if (!header.startsWith("GIF")) {
       console.error(`[createAnimatedGIF] ERROR: Invalid GIF header: ${header}`);
-      throw new Error('GIF encoding failed - invalid header');
+      throw new Error("GIF encoding failed - invalid header");
     }
   } else {
-    console.error(`[createAnimatedGIF] ERROR: GIF bytes too short (${gifBytes.length} bytes), expected at least 6 bytes for header`);
-    throw new Error('GIF encoding failed - bytes too short');
+    console.error(
+      `[createAnimatedGIF] ERROR: GIF bytes too short (${gifBytes.length} bytes), expected at least 6 bytes for header`
+    );
+    throw new Error("GIF encoding failed - bytes too short");
   }
-  
+
   // Expected size calculation: for 4 frames at 1170x1560, even with heavy compression, should be > 100KB
   const expectedMinSize = (width * height * frames.length) / 10; // Rough estimate: 10% of raw pixel data
   if (gifBytes.length < expectedMinSize) {
@@ -608,7 +659,7 @@ function createAnimatedGIF(
       `[createAnimatedGIF] WARNING: GIF size (${gifBytes.length} bytes) is much smaller than expected minimum (${expectedMinSize} bytes). This might indicate all frames are identical or encoding issue.`
     );
   }
-  
+
   return gifBytes;
 }
 
@@ -621,14 +672,16 @@ export default async function handler(
   console.log(`[create-filtered-gif] Method: ${req.method}`);
   console.log(`[create-filtered-gif] URL: ${req.url}`);
   console.log(`[create-filtered-gif] Headers:`, {
-    'content-type': req.headers['content-type'],
-    'content-length': req.headers['content-length'],
-    'user-agent': req.headers['user-agent']?.substring(0, 100),
+    "content-type": req.headers["content-type"],
+    "content-length": req.headers["content-length"],
+    "user-agent": req.headers["user-agent"]?.substring(0, 100),
   });
 
   // Only allow POST requests
   if (req.method !== "POST") {
-    console.log(`[create-filtered-gif] Rejected: Method not allowed (${req.method})`);
+    console.log(
+      `[create-filtered-gif] Rejected: Method not allowed (${req.method})`
+    );
     return res.status(405).json({
       error: "Method not allowed",
       message: "Only POST requests are accepted",
@@ -640,18 +693,18 @@ export default async function handler(
   try {
     console.log(`[create-filtered-gif] Starting FormData parsing...`);
     const parseStartTime = Date.now();
-    
+
     // Parse multipart/form-data
     const { images, frameDelay } = await parseFormData(req);
     tempFiles = images;
-    
+
     const parseDuration = Date.now() - parseStartTime;
     console.log(`[create-filtered-gif] FormData parsed in ${parseDuration}ms`);
 
     console.log(
       `[create-filtered-gif] Processing ${images.length} images, frameDelay: ${frameDelay}ms`
     );
-    
+
     // Log file details for debugging
     images.forEach((file, index) => {
       console.log(
@@ -700,13 +753,13 @@ export default async function handler(
     console.log(
       `[create-filtered-gif] Frame delay: ${frameDelay}ms (${Math.round(frameDelay / 10)} centiseconds)`
     );
-    
+
     const gifBytes = createAnimatedGIF(processedFrames, frameDelay);
 
     console.log(
       `[create-filtered-gif] GIF created: ${(gifBytes.length / 1024).toFixed(1)}KB, ${processedFrames.length} frame(s)`
     );
-    
+
     if (gifBytes.length < 10000) {
       console.warn(
         `[create-filtered-gif] WARNING: GIF size is suspiciously small (${(gifBytes.length / 1024).toFixed(1)}KB). Expected larger size for ${processedFrames.length} frames at ${processedFrames[0].width}x${processedFrames[0].height}`
@@ -730,15 +783,21 @@ export default async function handler(
     // Return GIF as binary
     // Use res.end() for binary data to ensure proper encoding
     const totalDuration = Date.now() - requestStartTime;
-    console.log(`[create-filtered-gif] Total request processing time: ${totalDuration}ms`);
-    console.log(`[create-filtered-gif] Sending response: ${gifBytes.length} bytes, Content-Type: image/gif`);
-    
+    console.log(
+      `[create-filtered-gif] Total request processing time: ${totalDuration}ms`
+    );
+    console.log(
+      `[create-filtered-gif] Sending response: ${gifBytes.length} bytes, Content-Type: image/gif`
+    );
+
     res.status(200);
     res.setHeader("Content-Type", "image/gif");
     res.setHeader("Content-Length", gifBytes.length.toString());
     res.end(Buffer.from(gifBytes));
-    
-    console.log(`[create-filtered-gif] ===== REQUEST COMPLETED SUCCESSFULLY =====`);
+
+    console.log(
+      `[create-filtered-gif] ===== REQUEST COMPLETED SUCCESSFULLY =====`
+    );
     return;
   } catch (error: any) {
     // Clean up temp files on error

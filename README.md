@@ -277,12 +277,14 @@ Content-Type: multipart/form-data
 ### Example Input/Output
 
 **Example Input Frames:**
+
 - `test_images/frame1.jpg` - First filtered frame
-- `test_images/frame2.jpg` - Second filtered frame  
+- `test_images/frame2.jpg` - Second filtered frame
 - `test_images/frame3.jpg` - Third filtered frame
 - `test_images/frame4.jpg` - Fourth filtered frame
 
 **Example Output:**
+
 - `test_images/test-output.gif` - Animated GIF containing all input frames
 
 ### Examples
@@ -303,32 +305,35 @@ curl -X POST http://localhost:3000/api/create-filtered-gif \
 
 ```javascript
 const formData = new FormData();
-formData.append('images[]', {
+formData.append("images[]", {
   uri: frame1Uri,
-  type: 'image/jpeg',
-  name: 'frame1.jpg'
+  type: "image/jpeg",
+  name: "frame1.jpg",
 });
-formData.append('images[]', {
+formData.append("images[]", {
   uri: frame2Uri,
-  type: 'image/jpeg',
-  name: 'frame2.jpg'
+  type: "image/jpeg",
+  name: "frame2.jpg",
 });
-formData.append('images[]', {
+formData.append("images[]", {
   uri: frame3Uri,
-  type: 'image/jpeg',
-  name: 'frame3.jpg'
+  type: "image/jpeg",
+  name: "frame3.jpg",
 });
-formData.append('images[]', {
+formData.append("images[]", {
   uri: frame4Uri,
-  type: 'image/jpeg',
-  name: 'frame4.jpg'
+  type: "image/jpeg",
+  name: "frame4.jpg",
 });
-formData.append('frameDelay', '500');
+formData.append("frameDelay", "500");
 
-const response = await fetch('https://api.example.com/api/create-filtered-gif', {
-  method: 'POST',
-  body: formData,
-});
+const response = await fetch(
+  "https://api.example.com/api/create-filtered-gif",
+  {
+    method: "POST",
+    body: formData,
+  }
+);
 
 const gifBlob = await response.blob();
 // Save or display the GIF
@@ -337,22 +342,26 @@ const gifBlob = await response.blob();
 ### Design Decisions
 
 1. **Technology**: Node.js with Sharp + gifenc (pure JavaScript, no native deps)
+
    - **Sharp**: Already in use for thumbnail generation, fast native image processing
    - **gifenc**: Pure JavaScript GIF encoder with no native dependencies (unlike `gifencoder` which requires `canvas`)
    - Avoids Python/Pillow dependency (the `server/` repo is legacy)
 
 2. **Data Format**: multipart/form-data (standard, efficient, better for slow connections)
+
    - Standard for file uploads
    - Better for low/spotty internet: streams data incrementally
    - More efficient than base64 (33% size overhead)
    - Works with all HTTP clients
 
 3. **Size Limit**: 10MB per image (prevents memory exhaustion)
+
    - Reasonable for mobile app captures (typically 1-5MB)
    - Validated before processing (fails fast)
    - Protects server resources
 
 4. **Uniform Sizes**: All images must have identical dimensions (validated)
+
    - Required for GIF animation format
    - First image sets dimensions, others must match
    - Clear error message on mismatch
@@ -364,13 +373,13 @@ const gifBlob = await response.blob();
 
 ### Error Handling
 
-| Error | Status | Message Example |
-|-------|--------|----------------|
-| No images provided | 400 | "No images provided. Use 'images' or 'images[]' field." |
-| Image size exceeded | 400 | "Image 1 exceeds 10MB limit: 12.5MB" |
-| Dimension mismatch | 400 | "Image 2 dimensions (800x600) do not match first image (1024x768). All images must have uniform dimensions." |
-| Invalid frame delay | 400 | "frameDelay must be between 10 and 10000 milliseconds" |
-| Processing failure | 500 | "Failed to create GIF: [error details]" |
+| Error               | Status | Message Example                                                                                              |
+| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| No images provided  | 400    | "No images provided. Use 'images' or 'images[]' field."                                                      |
+| Image size exceeded | 400    | "Image 1 exceeds 10MB limit: 12.5MB"                                                                         |
+| Dimension mismatch  | 400    | "Image 2 dimensions (800x600) do not match first image (1024x768). All images must have uniform dimensions." |
+| Invalid frame delay | 400    | "frameDelay must be between 10 and 10000 milliseconds"                                                       |
+| Processing failure  | 500    | "Failed to create GIF: [error details]"                                                                      |
 
 ### Performance Characteristics
 
@@ -382,11 +391,13 @@ const gifBlob = await response.blob();
 ### Testing
 
 A test script is available at `tests/test-gif-endpoint.js` that:
+
 - Downloads sample images from URLs
 - Sends them to the endpoint
 - Saves the resulting GIF to `tests/test-output.gif`
 
 Run the test:
+
 ```bash
 cd tests
 node test-gif-endpoint.js
