@@ -46,7 +46,7 @@ if (process.argv.length > 2) {
   );
 }
 
-const API_URL = "http://imageresize.soulstealer.io/api/create-filtered-gif";
+const API_URL = process.env.API_URL || "http://localhost:3000/api/create-filtered-gif";
 const FRAME_DELAY = 500; // milliseconds
 
 // Create temp directory (in tests directory)

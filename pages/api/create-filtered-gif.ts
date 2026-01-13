@@ -352,10 +352,14 @@ async function parseFormData(
 
 /**
  * Process a single image file: validate size, extract dimensions, convert to RGBA pixels
+ * @param file - The image file to process
+ * @param index - The index of the image (0-based)
+ * @param cropTo - Optional dimensions to crop to (if provided, image will be cropped to these dimensions)
  */
 async function processImageFrame(
   file: formidable.File,
-  index: number
+  index: number,
+  cropTo?: { width: number; height: number }
 ): Promise<ProcessedFrame> {
   const filePath = file.filepath;
   const fileSize = file.size;
@@ -401,7 +405,7 @@ async function processImageFrame(
   }
 
   console.log(`[processImageFrame] Creating sharp image object...`);
-  const image = sharp(imageBuffer);
+  let image = sharp(imageBuffer);
 
   // Get metadata
   console.log(`[processImageFrame] Extracting image metadata...`);
@@ -423,6 +427,27 @@ async function processImageFrame(
 
   if (!metadata.width || !metadata.height) {
     throw new Error(`Image ${index + 1}: Unable to read dimensions`);
+  }
+
+  // Apply cropping if needed
+  if (
+    cropTo &&
+    (metadata.width !== cropTo.width || metadata.height !== cropTo.height)
+  ) {
+    console.log(
+      `[processImageFrame] Cropping image from ${metadata.width}x${metadata.height} to ${cropTo.width}x${cropTo.height}`
+    );
+    // Use sharp's resize with cover mode to crop to exact dimensions
+    // Position 'left' aligns horizontally to the left (crops from right for width)
+    // For height, 'cover' mode will center by default, but since differences are small (1-2px),
+    // this should be acceptable. For exact bottom alignment, we'd need more complex logic.
+    image = image.resize(cropTo.width, cropTo.height, {
+      fit: "cover",
+      position: "left", // Crop from left (width), center vertically
+    });
+    console.log(
+      `[processImageFrame] Image cropped to ${cropTo.width}x${cropTo.height}`
+    );
   }
 
   // Convert to RGBA raw pixel data (required by gifenc)
@@ -712,26 +737,112 @@ export default async function handler(
       );
     });
 
-    // Process all images
-    const processedFrames: ProcessedFrame[] = [];
-    let firstDimensions: { width: number; height: number } | null = null;
+    // Step 1: Get dimensions for all images first (metadata only, lightweight)
+    console.log(
+      `[create-filtered-gif] Step 1: Checking dimensions for ${images.length} images...`
+    );
+    const imageDimensions: Array<{
+      width: number;
+      height: number;
+      index: number;
+    }> = [];
 
     for (let i = 0; i < images.length; i++) {
-      const frame = await processImageFrame(images[i], i);
+      const file = images[i];
+      const filePath = file.filepath;
+      const imageBuffer = fs.readFileSync(filePath);
+      const image = sharp(imageBuffer);
+      const metadata = await image.metadata();
 
-      // Validate uniform dimensions
-      if (firstDimensions === null) {
-        firstDimensions = { width: frame.width, height: frame.height };
-      } else {
-        if (
-          frame.width !== firstDimensions.width ||
-          frame.height !== firstDimensions.height
-        ) {
+      if (!metadata.width || !metadata.height) {
+        throw new Error(`Image ${i + 1}: Unable to read dimensions`);
+      }
+
+      imageDimensions.push({
+        width: metadata.width,
+        height: metadata.height,
+        index: i,
+      });
+
+      console.log(
+        `[create-filtered-gif] Image ${i + 1} dimensions: ${metadata.width}x${metadata.height}`
+      );
+    }
+
+    // Step 2: Find minimum dimensions
+    const minWidth = Math.min(...imageDimensions.map((d) => d.width));
+    const minHeight = Math.min(...imageDimensions.map((d) => d.height));
+
+    console.log(
+      `[create-filtered-gif] Minimum dimensions found: ${minWidth}x${minHeight}`
+    );
+
+    // Step 3: Check if dimensions differ and validate 10% rule
+    const hasDimensionMismatch = imageDimensions.some(
+      (d) => d.width !== minWidth || d.height !== minHeight
+    );
+
+    if (hasDimensionMismatch) {
+      console.log(
+        `[create-filtered-gif] ===== DIMENSION MISMATCH DETECTED =====`
+      );
+      console.log(
+        `[create-filtered-gif] Smallest width: ${minWidth}, Smallest height: ${minHeight}`
+      );
+
+      // Check each image's difference from minimum
+      for (const dim of imageDimensions) {
+        const widthDiff = dim.width - minWidth;
+        const heightDiff = dim.height - minHeight;
+        const widthDiffPercent = (widthDiff / minWidth) * 100;
+        const heightDiffPercent = (heightDiff / minHeight) * 100;
+
+        if (widthDiff > 0 || heightDiff > 0) {
+          console.log(
+            `[create-filtered-gif] Image ${dim.index + 1}: ${dim.width}x${dim.height} differs from min: width +${widthDiff} (${widthDiffPercent.toFixed(2)}%), height +${heightDiff} (${heightDiffPercent.toFixed(2)}%)`
+          );
+        }
+
+        // Check if difference exceeds 10%
+        if (widthDiffPercent > 10 || heightDiffPercent > 10) {
           throw new Error(
-            `Image ${i + 1} dimensions (${frame.width}x${frame.height}) do not match first image (${firstDimensions.width}x${firstDimensions.height}). All images must have uniform dimensions.`
+            `Image ${dim.index + 1} dimensions (${dim.width}x${dim.height}) differ from minimum (${minWidth}x${minHeight}) by more than 10%. Width difference: ${widthDiffPercent.toFixed(2)}%, Height difference: ${heightDiffPercent.toFixed(2)}%. All images must have dimensions within 10% of each other.`
           );
         }
       }
+
+      console.log(
+        `[create-filtered-gif] All dimension differences are within 10%, proceeding with normalization...`
+      );
+    } else {
+      console.log(
+        `[create-filtered-gif] All images have uniform dimensions, no normalization needed`
+      );
+    }
+
+    // Step 4: Process all images, cropping to minimum dimensions if needed
+    const processedFrames: ProcessedFrame[] = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      const dim = imageDimensions[i];
+      const needsCropping = dim.width !== minWidth || dim.height !== minHeight;
+
+      if (needsCropping) {
+        console.log(
+          `[create-filtered-gif] Image ${i + 1}: ${dim.width}x${dim.height} - Cropping to ${minWidth}x${minHeight}`
+        );
+      } else {
+        console.log(
+          `[create-filtered-gif] Image ${i + 1}: ${dim.width}x${dim.height} - Already matches min dimensions`
+        );
+      }
+
+      const frame = await processImageFrame(
+        images[i],
+        i,
+        needsCropping ? { width: minWidth, height: minHeight } : undefined
+      );
 
       processedFrames.push(frame);
       console.log(
