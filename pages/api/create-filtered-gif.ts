@@ -223,8 +223,10 @@ const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 const MAX_TOTAL_FILES = 20; // Maximum number of files
 const MAX_TOTAL_FILE_SIZE_BYTES = MAX_IMAGE_SIZE_BYTES * MAX_TOTAL_FILES; // Total size limit for all files
 const DEFAULT_FRAME_DELAY_MS = 500;
-const MIN_FRAME_DELAY_MS = 10; // Minimum 10ms (100fps max)
+const MIN_FRAME_DELAY_MS = 10; // Minimum 10ms (100fps max) - user input validation
 const MAX_FRAME_DELAY_MS = 10000; // Maximum 10 seconds per frame
+// Note: For iOS Photos compatibility, we enforce a minimum of 20 centiseconds (200ms)
+// in the GIF encoding, even if user requests smaller delays
 
 // Disable Next.js body parser for multipart/form-data
 export const config = {
@@ -514,8 +516,9 @@ function createAnimatedGIF(
   console.log(`[createAnimatedGIF] Initializing GIF encoder...`);
   console.log(`[createAnimatedGIF] Dimensions: ${width}x${height}`);
   console.log(`[createAnimatedGIF] Total frames: ${frames.length}`);
+  const initialDelayCentiseconds = Math.round(frameDelay / 10);
   console.log(
-    `[createAnimatedGIF] Frame delay: ${frameDelay}ms (${Math.round(frameDelay / 10)} centiseconds)`
+    `[createAnimatedGIF] Frame delay: ${frameDelay}ms (will be ${initialDelayCentiseconds} centiseconds in GIF after gifenc conversion)`
   );
 
   const encoderStartTime = Date.now();
@@ -624,21 +627,39 @@ function createAnimatedGIF(
     );
 
     // Write frame with delay
-    // gifenc expects delay in centiseconds (1/100th of a second)
-    // frameDelay is in milliseconds, so convert: 500ms = 50 centiseconds
-    const delayCentiseconds = Math.round(frameDelay / 10);
+    // gifenc expects delay in MILLISECONDS and converts to centiseconds internally (divides by 10)
+    // So we pass frameDelay directly in milliseconds: 500ms stays as 500ms
+    // The library will convert: 500ms -> 50 centiseconds internally
+    //
+    // IMPORTANT: iOS Photos and many GIF viewers have minimum delay requirements:
+    // - Delays < 2 centiseconds are often treated as "as fast as possible" (defaulting to 10cs = 100ms)
+    // - iOS Photos specifically plays GIFs faster if delays are below ~20 centiseconds (200ms)
+    // - For reliable playback across all viewers, enforce minimum of 200ms (which becomes 20 centiseconds)
+    // - This ensures consistent timing, especially on iOS devices
+    let delayMs = frameDelay;
 
+    // Enforce minimum delay for iOS Photos compatibility
+    // Minimum 200ms ensures proper playback on iOS (becomes 20 centiseconds after gifenc conversion)
+    const MIN_DELAY_MS = 200; // 200ms minimum for iOS compatibility
+    if (delayMs < MIN_DELAY_MS) {
+      console.warn(
+        `[createAnimatedGIF] Frame ${i + 1}: Requested delay ${delayMs}ms is below iOS minimum of ${MIN_DELAY_MS}ms (20 centiseconds). Enforcing minimum for iOS Photos compatibility.`
+      );
+      delayMs = MIN_DELAY_MS;
+    }
+
+    const delayCentiseconds = Math.round(delayMs / 10); // For logging only
     console.log(`[createAnimatedGIF] Writing frame ${i + 1} to GIF...`);
     const writeStartTime = Date.now();
     gif.writeFrame(index, width, height, {
       palette,
-      delay: delayCentiseconds, // Convert milliseconds to centiseconds
+      delay: delayMs, // Pass milliseconds directly - gifenc converts to centiseconds internally
       first: i === 0, // First frame needs to set global color table
     });
     const writeDuration = Date.now() - writeStartTime;
 
     console.log(
-      `[createAnimatedGIF] Frame ${i + 1}/${frames.length} written in ${writeDuration}ms: ${width}x${height}, pixels: ${pixelDataSize} bytes, delay: ${delayCentiseconds}cs, first: ${i === 0}`
+      `[createAnimatedGIF] Frame ${i + 1}/${frames.length} written in ${writeDuration}ms: ${width}x${height}, pixels: ${pixelDataSize} bytes, delay: ${delayMs}ms (${delayCentiseconds}cs after gifenc conversion), first: ${i === 0}`
     );
   }
 
