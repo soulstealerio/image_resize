@@ -35,7 +35,8 @@ import { LRUCache } from "lru-cache";
 // THUMBNAIL CACHE
 // ============================================================================
 // In-memory LRU cache for processed thumbnails
-// - Max 300MB to leave room for app memory
+// - Max 1024MB to fit more entries before LRU eviction. Pod memory limit
+//   is 1.5GB; this leaves ~500MB headroom for Node runtime + app code.
 // - 24 hour TTL (images are immutable)
 // - LRU eviction when full
 // ============================================================================
@@ -47,7 +48,7 @@ interface CacheEntry {
 }
 
 // Cache configuration
-const CACHE_MAX_SIZE_MB = 300;
+const CACHE_MAX_SIZE_MB = 1024;
 const CACHE_MAX_SIZE_BYTES = CACHE_MAX_SIZE_MB * 1024 * 1024;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
